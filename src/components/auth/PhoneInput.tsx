@@ -1,26 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { phoneSchema, type PhoneFormData } from '../../schemas/authSchema';
-import { useCountries } from '../../hooks/useCountries';
-import { useAuthStore } from '../../store/authStore';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { generateOTP } from '../../utils/helpers';
-import { ChevronDown, Search, X } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useState, useRef, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { phoneSchema, type PhoneFormData } from "../../schemas/authSchema";
+import { useCountries } from "../../hooks/useCountries";
+import { useAuthStore } from "../../store/authStore";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
+import { LoadingSpinner } from "../ui/LoadingSpinner";
+import { generateOTP } from "../../utils/helpers";
+import { ChevronDown, Search, X } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface PhoneInputProps {
-  onOtpSent: (phone: string, countryCode: string) => void;
+  onOtpSent: (phone: string, countryCode: string, otp: string) => void;
 }
 
 export const PhoneInput: React.FC<PhoneInputProps> = ({ onOtpSent }) => {
   const { countries, loading: countriesLoading } = useCountries();
   const { isLoading, setLoading, setOtpSent } = useAuthStore();
-  
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -33,13 +33,13 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({ onOtpSent }) => {
   } = useForm<PhoneFormData>({
     resolver: zodResolver(phoneSchema),
     defaultValues: {
-      countryCode: '',
+      countryCode: "",
     },
   });
 
   // Filter countries based on search query
   const filteredCountries = countries
-    .filter(country => 
+    .filter((country) =>
       country.name.common.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => a.name.common.localeCompare(b.name.common));
@@ -47,13 +47,16 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({ onOtpSent }) => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Focus search input when dropdown opens
@@ -66,42 +69,42 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({ onOtpSent }) => {
   const handleCountrySelect = (country: any) => {
     const countryCode = `${country.idd.root}${country.idd.suffixes[0]}`;
     setSelectedCountry(country);
-    setValue('countryCode', countryCode);
+    setValue("countryCode", countryCode);
     setIsDropdownOpen(false);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const handleDropdownToggle = () => {
     setIsDropdownOpen(!isDropdownOpen);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const clearSelection = () => {
     setSelectedCountry(null);
-    setValue('countryCode', '');
-    setSearchQuery('');
+    setValue("countryCode", "");
+    setSearchQuery("");
   };
 
   const onSubmit = async (data: PhoneFormData) => {
     try {
       setLoading(true);
-      
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       const otp = generateOTP();
-      console.log('Generated OTP:', otp); // For testing purposes
-      
+      console.log("Generated OTP:", otp); // For testing purposes
+
       // Store OTP in localStorage for validation
-      localStorage.setItem('currentOTP', otp);
-      localStorage.setItem('otpExpiry', (Date.now() + 300000).toString());
-      
+      localStorage.setItem("currentOTP", otp);
+      localStorage.setItem("otpExpiry", (Date.now() + 300000).toString());
+
       setOtpSent(true);
-      onOtpSent(data.phone, data.countryCode);
-      
+      onOtpSent(data.phone, data.countryCode, otp); // Pass OTP up
+
       toast.success(`OTP sent to ${data.countryCode}${data.phone}`);
     } catch (error) {
-      toast.error('Failed to send OTP. Please try again.');
+      toast.error("Failed to send OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -129,9 +132,10 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({ onOtpSent }) => {
             className={`
               w-full px-3 py-2 border rounded-lg shadow-sm text-left
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-              ${errors.countryCode 
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-                : 'border-gray-300 dark:border-gray-600'
+              ${
+                errors.countryCode
+                  ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                  : "border-gray-300 dark:border-gray-600"
               }
               dark:bg-gray-700 dark:text-white
               flex items-center justify-between
@@ -141,11 +145,14 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({ onOtpSent }) => {
               <div className="flex items-center">
                 <span className="mr-2">{selectedCountry.flag}</span>
                 <span className="truncate">
-                  {selectedCountry.name.common} ({selectedCountry.idd.root}{selectedCountry.idd.suffixes[0]})
+                  {selectedCountry.name.common} ({selectedCountry.idd.root}
+                  {selectedCountry.idd.suffixes[0]})
                 </span>
               </div>
             ) : (
-              <span className="text-gray-500 dark:text-gray-400">Select Country</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                Select Country
+              </span>
             )}
             <div className="flex items-center">
               {selectedCountry && (
@@ -160,9 +167,11 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({ onOtpSent }) => {
                   <X size={16} className="text-gray-400" />
                 </button>
               )}
-              <ChevronDown 
-                size={16} 
-                className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
+              <ChevronDown
+                size={16}
+                className={`text-gray-400 transition-transform ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
               />
             </div>
           </button>
@@ -205,7 +214,8 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({ onOtpSent }) => {
                           {country.name.common}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {country.idd.root}{country.idd.suffixes[0]}
+                          {country.idd.root}
+                          {country.idd.suffixes[0]}
                         </div>
                       </div>
                     </button>
@@ -228,15 +238,10 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({ onOtpSent }) => {
         type="tel"
         placeholder="Enter your phone number"
         error={errors.phone?.message}
-        {...register('phone')}
+        {...register("phone")}
       />
 
-      <Button
-        type="submit"
-        loading={isLoading}
-        fullWidth
-        className="mt-6"
-      >
+      <Button type="submit" loading={isLoading} fullWidth className="mt-6">
         Send OTP
       </Button>
     </form>

@@ -6,23 +6,36 @@ import { MessageCircle } from "lucide-react";
 export const AuthPage: React.FC = () => {
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phoneData, setPhoneData] = useState({ phone: "", countryCode: "" });
+  const [otp, setOtp] = useState<string | null>(null); // <-- Add this
 
-  const handleOtpSent = (phone: string, countryCode: string) => {
+  const handleOtpSent = (
+    phone: string,
+    countryCode: string,
+    otpValue: string
+  ) => {
     setPhoneData({ phone, countryCode });
+    setOtp(otpValue); // <-- Store OTP
     setStep("otp");
   };
 
   const handleVerified = () => {
-    // This will trigger a re-render and redirect to dashboard
     window.location.reload();
   };
 
   const handleResend = () => {
     setStep("phone");
+    setOtp(null);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 relative">
+      {/* OTP Pop-up (show only on OTP page) */}
+      {step === "otp" && otp && (
+        <div className="fixed top-6 right-6 z-50 bg-blue-600 text-white px-4 py-2 rounded shadow-lg text-sm font-mono">
+          OTP: <span className="font-bold">{otp}</span>
+        </div>
+      )}
+
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center">
